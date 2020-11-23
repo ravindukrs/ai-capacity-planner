@@ -4,14 +4,18 @@ import pandas as pd
 import application.constants as const
 import pymc3 as pm
 from application.response_formatter import formatter
-from application.load_model import get_model
+
 
 seed = 42
 np.random.seed(42)
 
+# Load the pickle once but create a new BayesianPolynomialRegressor to encompose 
+# the model's content in each new instance of the class.
+raw_model_ref = open(const.model_path, 'rb').read()
+model = pickle.load(raw_model_ref)
+
 class BayesianPolynomialRegressor:
     def __init__(self):
-        model = get_model()
         self.poly_model = model["model"]
         self.trace = model["trace"]
         self.x_shared = model["x_shared"]
