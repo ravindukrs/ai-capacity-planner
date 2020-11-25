@@ -9,8 +9,25 @@ from application.regressor import BayesianPolynomialRegressor
 import application.constants as const
 from application.response_formatter import formatter, json_value_validator
 
+import multiprocessing as mp
 
 ai_capacity_planner = Flask(__name__)
+
+def mt_prediction(q, scenario, concurrency, message_size, method, sample_count):
+    poly_regressor = BayesianPolynomialRegressor()
+    prediction = poly_regressor.predict_point([scenario, concurrency, message_size], method=method, sample_count=sample_count);
+    tps,latency = formatter(tps=prediction, concurrency=concurrency);
+    q.put([tps, latency])
+    print(tps)
+    print("Result Returned")
+
+def mt_max_tps_prediction(q, scenario, message_size, method, sample_count):
+    poly_regressor = BayesianPolynomialRegressor()
+    tps = poly_regressor.max_tps([scenario, message_size], method=method, sample_count=sample_count)
+    tps = formatter(tps=tps);
+    q.put(tps)
+    print(tps)
+    print("Result Returned")
 
 @ai_capacity_planner.route('/')
 def check():
@@ -18,8 +35,9 @@ def check():
 
 @ai_capacity_planner.route('/predict_point', methods=['POST'])
 def point_prediction():
+    print("Start Req")
+
     if request.method == "POST":
-        poly_regressor = BayesianPolynomialRegressor()
         data = request.get_json()
 
         method = const.DEFAULT_METHOD
@@ -51,12 +69,26 @@ def point_prediction():
                     method = "NS"
 
         try:
-            prediction = poly_regressor.predict_point([scenario, concurrency, message_size], method=method, sample_count=sample_count);
-            tps,latency = formatter(tps=prediction, concurrency=concurrency);
-            print("Result Returned")
+            # poly_regressor = BayesianPolynomialRegressor()
+            # prediction = poly_regressor.predict_point([scenario, concurrency, message_size], method=method, sample_count=sample_count);
+            # tps,latency = formatter(tps=prediction, concurrency=concurrency);
+            # print("Result Returned")
+            # print("End Req")
+            #
+            # return jsonify(
+            #     tps=tps,
+            #     latency=latency
+            # )
+
+            q = mp.Queue()
+            p = mp.Process(target=mt_prediction, args=(q,scenario,concurrency,message_size, method, sample_count))
+            p.start()
+            res = q.get()
+            q.close()
+            p.join()
             return jsonify(
-                tps=tps,
-                latency=latency
+                tps=res[0],
+                latency=res[1]
             )
         except Exception as e:
             print(e)
@@ -66,7 +98,6 @@ def point_prediction():
 @ai_capacity_planner.route('/max_tps', methods=['POST'])
 def max_tps_prediction():
     if request.method == "POST":
-        poly_regressor = BayesianPolynomialRegressor()
         data = request.get_json()
 
         method = const.DEFAULT_METHOD
@@ -97,11 +128,19 @@ def max_tps_prediction():
                 method = "NS"
 
         try:
-            tps = poly_regressor.max_tps([scenario, message_size], method=method, sample_count=sample_count)
-            tps = formatter(tps=tps);
+            # poly_regressor = BayesianPolynomialRegressor()
+            # tps = poly_regressor.max_tps([scenario, message_size], method=method, sample_count=sample_count)
+            # tps = formatter(tps=tps);
+
+            q = mp.Queue()
+            p = mp.Process(target=mt_max_tps_prediction, args=(q, scenario, message_size, method, sample_count))
+            p.start()
+            res = q.get()
+            q.close()
+            p.join()
 
             return jsonify(
-                max_tps=tps,
+                max_tps=res,
             )
 
         except Exception as e:

@@ -15,3 +15,4 @@ Theano==1.0.5
 threadpoolctl
 tqdm
 Werkzeug
+gunicorn

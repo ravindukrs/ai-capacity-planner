@@ -2,14 +2,15 @@ import math
 import numpy as np
 import pandas as pd
 import application.constants as const
-import pymc3 as pm
 from application.response_formatter import formatter
 from application.load_model import get_model
+
 
 seed = 42
 np.random.seed(42)
 
 class BayesianPolynomialRegressor:
+
     def __init__(self):
         model = get_model()
         self.poly_model = model["model"]
@@ -19,19 +20,25 @@ class BayesianPolynomialRegressor:
         self.scaler = model["scaler"]
         self.encoder = model["encoder"]
         self.gp = model["gp"]
+        del model
 
+    def __del__(self):
+        print("Deleting")
 
     def predict(self, sample_count=const.DEFAULT_SAMPLE_COUNT):
+        import pymc3 as pm
         with self.poly_model:
             pred_samples = pm.sample_posterior_predictive(self.trace, vars=[self.f_pred], samples=sample_count, random_seed=seed)
             y_pred, uncer = pred_samples["f_pred"].mean(axis=0), pred_samples["f_pred"].std(axis=0)
             print(y_pred)
+            del self
             return y_pred
 
     def predict_gp(self):
         with self.poly_model:
             mu, var = self.gp.predict(Xnew=self.x_shared, point=self.trace[0], diag=True)
             print(mu)
+            del self
             return mu
 
     def predict_list(self, method = None, sample_count=const.DEFAULT_SAMPLE_COUNT, file_name="custom.csv"):
