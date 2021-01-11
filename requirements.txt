@@ -10,7 +10,7 @@ pandas
 pymc3==3.7
 python-dateutil
 pytz
-scikit-learn
+scikit-learn==0.23.2
 Theano==1.0.5
 threadpoolctl
 tqdm

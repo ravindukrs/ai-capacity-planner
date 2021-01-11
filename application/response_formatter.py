@@ -27,7 +27,7 @@ def json_value_validator(scenario=None, concurrency=None, message_size=None, sam
         if not isinstance(message_size, numbers.Number):
             is_valid = is_valid * False;
 
-        if not scenario == "Passthrough" or scenario == "Transformation":
+        if scenario != "Passthrough" and scenario != "Transformation":
             is_valid = is_valid * False;
 
         if message_size < 1 or message_size > 102400:
@@ -37,7 +37,7 @@ def json_value_validator(scenario=None, concurrency=None, message_size=None, sam
         if not isinstance(concurrency, numbers.Number):
             is_valid = is_valid * False;
 
-        if concurrency < 1 or concurrency > 1000:
+        if concurrency < 1 or concurrency > 100000:
             is_valid = is_valid * False;
 
     if type == "sampling_check":
@@ -47,7 +47,6 @@ def json_value_validator(scenario=None, concurrency=None, message_size=None, sam
         if not sample_count >= 1:
             is_valid = is_valid * False;
 
-    print(is_valid)
     return is_valid
 
 
