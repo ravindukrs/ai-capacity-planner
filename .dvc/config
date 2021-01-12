@@ -1,0 +1,4 @@
+[core]
+    remote = storageremote
+['remote "storageremote"']
+    url = azure://modelcontainer
