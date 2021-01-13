@@ -1,9 +1,19 @@
-import math
+"""
+ Copyright (c) 2020, WSO2 Inc. (http://www.wso2.com). All Rights Reserved.
+  This software is the property of WSO2 Inc. and its suppliers, if any.
+  Dissemination of any information or reproduction of any material contained
+  herein is strictly forbidden, unless permitted by WSO2 in accordance with
+  the WSO2 Commercial License available at http://wso2.com/licenses.
+  For specific language governing the permissions and limitations under
+  this license, please see the license as well as any agreement you’ve
+  entered into with WSO2 governing the purchase of this software and any
+"""
+
 import numpy as np
-import pandas as pd
 import application.constants as const
 from application.response_formatter import formatter
 from application.load_model import get_model
+import pymc3 as pm
 
 seed = 42
 np.random.seed(42)
@@ -21,30 +31,39 @@ class BayesianPolynomialRegressor:
         self.gp = model["gp"]
         del model
 
-    def __del__(self):
-        print("Deleting")
-
     def predict(self, sample_count=const.DEFAULT_SAMPLE_COUNT):
-        import pymc3 as pm
+        """
+        Predict by Sampling.
+        :param sample_count:
+        :return prediction:
+        """
         with self.poly_model:
             pred_samples = pm.sample_posterior_predictive(self.trace, vars=[self.f_pred], samples=sample_count, random_seed=seed)
             y_pred, uncer = pred_samples["f_pred"].mean(axis=0), pred_samples["f_pred"].std(axis=0)
             return y_pred
 
     def predict_gp(self):
+        """
+        Predict by obtaining analytical mean.
+        :return mean as prediction:
+        """
         mu, var = self.gp.predict(Xnew=self.x_shared, point=self.trace[0], diag=True)
         return mu
 
     def predict_point(self, data, method = None, sample_count=const.DEFAULT_SAMPLE_COUNT):
-
+        """
+        Get TPS prediction for a single data point
+        Set data for prediction as a shared variable. Call appropiate prediction method.
+        :param data: Concurrency and Message Size
+        :return TPS and Little's law Latency:
+        """
         x_val = data;
-
         x_val[0] = self.encoder.transform([x_val[0]])[0]
         x_val = self.scaler.transform([x_val])
 
         self.x_shared.set_value(x_val)
 
-        if method == "NS":
+        if method == const.NO_SAMPLING:
             prediction = self.predict_gp()
             formatter(prediction[0])
             return prediction[0]
@@ -54,6 +73,12 @@ class BayesianPolynomialRegressor:
 
 
     def max_tps(self, data, method = None, sample_count=2000):
+        """
+        Get maximum TPS prediction for a given scenario and message size
+        Set data for prediction as a shared variable. Call appropiate prediction method.
+        :param data: Scenario and Message Size
+        :return TPS and Little's law Latency:
+        """
         my_list = []
         scenario = data[0];
         message_size = data[1];
@@ -67,7 +92,7 @@ class BayesianPolynomialRegressor:
 
         self.x_shared.set_value(data_array)
 
-        if method == "NS":
+        if method == const.NO_SAMPLING:
             predictions = self.predict_gp()
             return max(predictions)
 

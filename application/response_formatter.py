@@ -2,7 +2,12 @@ import math
 import numbers
 
 def formatter(tps, concurrency=None):
-
+    """
+    Get predicted TPS and format the TPS.
+    If concurrency is available, calculate Little's Law latency
+    :param data: Concurrency and Message Size
+    :return TPS(max tps) or TPS and Little's law Latency:
+    """
     #Round up TPS
     tps = math.ceil(tps * 100.0) / 100.0
     if tps<1:
@@ -19,7 +24,15 @@ def formatter(tps, concurrency=None):
 
 
 def json_value_validator(scenario=None, concurrency=None, message_size=None, sample_count=None, type="point_pred"):
-
+    """
+    Validate the JSON input.
+    :param scenario: 'Passthrough' or 'Transformation'
+    :param concurrency: Concurrency
+    :param message_size: Message Size
+    :param sample_count: Sample Count for Sampling Method
+    :param type: point_pred or max_tps
+    :return is_valid: Validity of JSON:
+    """
     is_valid = True
 
     if type == "point_pred" or type == "max_tps":
@@ -37,7 +50,7 @@ def json_value_validator(scenario=None, concurrency=None, message_size=None, sam
         if not isinstance(concurrency, numbers.Number):
             is_valid = is_valid * False;
 
-        if concurrency < 1 or concurrency > 100000:
+        if concurrency < 1 or concurrency > 1000:
             is_valid = is_valid * False;
 
     if type == "sampling_check":
