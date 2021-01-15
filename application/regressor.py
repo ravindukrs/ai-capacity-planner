@@ -99,4 +99,3 @@ class BayesianPolynomialRegressor:
         else:
             predictions = self.predict(sample_count=sample_count)
             return max(predictions)
-
