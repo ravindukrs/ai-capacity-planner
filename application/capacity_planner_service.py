@@ -1,5 +1,5 @@
 """
- Copyright (c) 2020, WSO2 Inc. (http://www.wso2.com). All Rights Reserved.
+ Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com). All Rights Reserved.
   This software is the property of WSO2 Inc. and its suppliers, if any.
   Dissemination of any information or reproduction of any material contained
   herein is strictly forbidden, unless permitted by WSO2 in accordance with
@@ -11,17 +11,13 @@
 
 import sys
 from os.path import dirname
-sys.path.append(dirname("."))
-from flask import Flask
+from wsgi import app as ai_capacity_planner
 from flask import request, jsonify, Response
 from application.regressor import BayesianPolynomialRegressor
 from pymc3 import memoize
 import application.constants as const
 from application.response_formatter import formatter, json_value_validator
 from application.logging_handler import logger
-
-
-ai_capacity_planner = Flask(__name__)
 
 @ai_capacity_planner.route('/')
 def check():
@@ -132,6 +128,3 @@ def max_tps_prediction():
         except Exception as e:
             logger.exception("ML Model Error : max_tps")
             return Response(status=const.HTTP_500_INTERNAL_SERVER_ERROR)
-
-if __name__ == '__main__':
-    ai_capacity_planner.run(threaded=True, host='0.0.0.0', port=5000)

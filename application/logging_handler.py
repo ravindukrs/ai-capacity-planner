@@ -1,5 +1,5 @@
 """
- Copyright (c) 2020, WSO2 Inc. (http://www.wso2.com). All Rights Reserved.
+ Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com). All Rights Reserved.
   This software is the property of WSO2 Inc. and its suppliers, if any.
   Dissemination of any information or reproduction of any material contained
   herein is strictly forbidden, unless permitted by WSO2 in accordance with
@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 log_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
 
-#file_handler = logging.FileHandler('programlogs.log')
-file_handler = logging.StreamHandler()
-file_handler.setFormatter(log_formatter)
+handler = logging.StreamHandler()
+handler.setFormatter(log_formatter)
 
-logger.addHandler(file_handler)
+logger.addHandler(handler)

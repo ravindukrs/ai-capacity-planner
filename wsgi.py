@@ -8,10 +8,8 @@
   this license, please see the license as well as any agreement you’ve
   entered into with WSO2 governing the purchase of this software and any
 """
-from flask import Flask
+from application.logging_handler import logger
+from application import create_app
 
-def create_app():
-    print("In Execution")
-    app = Flask(__name__, instance_relative_config=False)
-    with app.app_context():
-        return app
+logger.info('Starting the server...')
+app = create_app()

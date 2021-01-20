@@ -2,12 +2,7 @@ venv
 .idea
 __pycache__
 application/__pycache__
-programlogs.log
 model/bayesian_regressor.p
-model/bayesian_regressor_old.p
-
-# Compiled class file
-*.class
 
 # Log file
 *.log
