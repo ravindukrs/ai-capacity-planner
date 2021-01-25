@@ -9,14 +9,14 @@
   entered into with WSO2 governing the purchase of this software and any
 """
 
-#Model
+# Model
 model_path = "model/bayesian_regressor.p"
 
-#Datasets
+# Datasets
 training_data = "dataset/dataset.csv"
 data_path = "dataset/"
 
-#Results
+# Results
 result_path = "results/"
 
 # HTTP response codes
@@ -27,11 +27,11 @@ HTTP_400_BAD_REQUEST = 400
 HTTP_405_METHOD_NOT_ALLOWED = 405
 HTTP_422_UNPROCESSABLE_ENTITY = 422
 
-#Regressor Properties
-DEFAULT_SAMPLE_COUNT=2000
+# Regressor Properties
+DEFAULT_SAMPLE_COUNT = 2000
 
-#JSON KEYS
-SAMPLE_COUNT="sample_count"
+# JSON KEYS
+SAMPLE_COUNT = "sample_count"
 CONCURRENCY = "concurrency"
 MESSAGE_SIZE = "message_size"
 METHOD = "method"
@@ -40,6 +40,6 @@ SAMPLING = "sampling"
 NO_SAMPLING = "NS"
 DEFAULT_METHOD = NO_SAMPLING
 
-#MAX TPS Properties
+# MAX TPS Properties
 MAX_CONCURRENCY = 1000
 CONCURRENCY_STEP = 10

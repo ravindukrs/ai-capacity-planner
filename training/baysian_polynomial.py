@@ -20,22 +20,27 @@ from sklearn.model_selection import KFold
 import pymc3 as pm
 from sklearn.metrics import mean_squared_error
 
+
 def root_mean_squared_percentage_error(y_true, prediction):
     """
-    Calculate root mean squared percentage error of predictions compared to y_values from dataset.
+    Calculate root mean squared percentage error of
+    predictions compared to y_values from dataset.
     :param y_true: y_values (actual TPS) from Dataset
     :param prediction: predicted TPS
     :return rmspe: Root mean squared percentage error:
     """
     y_true, y_pred = np.array(y_true), np.array(prediction)
-    EPSILON =  1e-10
-    rmspe = (np.sqrt(np.mean(np.square((y_true - y_pred) / (y_true + EPSILON))))) * 100
+    EPSILON = 1e-10
+    rmspe = (np.sqrt(np.mean(np.square((y_true - y_pred) /
+                                       (y_true + EPSILON))))) * 100
     return rmspe
 
-#Define MAPE function
+
+# Define MAPE function
 def mean_absolute_percentage_error(y_true, prediction):
     """
-    Calculate mean absolute percentage error of predictions compared to y_values from dataset.
+    Calculate mean absolute percentage error of
+    predictions compared to y_values from dataset.
     :param y_true: y_values (actual TPS) from Dataset
     :param prediction: predicted TPS
     :return rmspe: Mean Absolute Percentage error:
@@ -44,28 +49,34 @@ def mean_absolute_percentage_error(y_true, prediction):
     mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
     return mape
 
+
 class BayesianPolyRegression:
     def fit(self, X, Y):
         with pm.Model() as self.model:
-            l = pm.Gamma("l", alpha=2, beta=1)
+            lm = pm.Gamma("l", alpha=2, beta=1)
             offset = 0.1
             nu = pm.HalfCauchy("nu", beta=1)
             d = 2
 
-            cov = nu ** 2 * pm.gp.cov.Polynomial(X.shape[1], l, d, offset)
+            cov = nu ** 2 * pm.gp.cov.Polynomial(X.shape[1], lm, d, offset)
 
             self.gp = pm.gp.Marginal(cov_func=cov)
 
             sigma = pm.HalfCauchy("sigma", beta=1)
-            y_ = self.gp.marginal_likelihood("y", X=X, y=Y, noise=sigma)
+            self.gp.marginal_likelihood("y", X=X, y=Y, noise=sigma)
 
             self.map_trace = [pm.find_MAP()]
 
     def predict(self, X, with_error=False):
         with self.model:
             f_pred = self.gp.conditional('f_pred', X)
-            pred_samples = pm.sample_posterior_predictive(self.map_trace, vars=[f_pred], samples=2000, random_seed=42)
-            y_pred, uncer = pred_samples['f_pred'].mean(axis=0), pred_samples['f_pred'].std(axis=0)
+            pred_samples = pm.sample_posterior_predictive(
+                self.map_trace, vars=[f_pred],
+                samples=2000,
+                random_seed=42
+            )
+            y_pred, uncer = pred_samples['f_pred'].mean(axis=0), \
+                pred_samples['f_pred'].std(axis=0)
 
         if with_error:
             return y_pred, uncer / 1000
@@ -81,7 +92,7 @@ def get_fold_predictions(X, y, eval_X):
 
 
 def run_baysian_poly():
-    predict_label = 9  #9 for TPS
+    predict_label = 9  # 9 for TPS
 
     # Read Data
     dataset = pd.read_csv('dataset/dataset.csv')
@@ -117,7 +128,9 @@ def run_baysian_poly():
     kf = KFold(n_splits=10)
 
     for train_index, test_index in kf.split(X):
-        pred_bayes, error = get_fold_predictions(np.copy(X[train_index]), np.copy(Y[train_index]), np.copy(X[test_index]));
+        pred_bayes, error = get_fold_predictions(np.copy(X[train_index]),
+                                                 np.copy(Y[train_index]),
+                                                 np.copy(X[test_index]))
 
         for item in pred_bayes:
             predictions.append(item)
@@ -144,4 +157,6 @@ def run_baysian_poly():
             writer = csv.writer(f)
             writer.writerows(zip(y_actual, predictions))
 
-run_baysian_poly(); #Run Evaluation
+
+# Run Evaluation
+run_baysian_poly()

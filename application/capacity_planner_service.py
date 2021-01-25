@@ -26,6 +26,7 @@ def check():
     """
     return Response(status=const.HTTP_200_OK)
 
+
 @ai_capacity_planner.route('/predict_point', methods=['POST'])
 def point_prediction():
     """
@@ -39,21 +40,28 @@ def point_prediction():
 
         if data is None:
             logger.error("Invalid JSON schema.")
-            return jsonify({"error": "Invalid JSON Schema"}), const.HTTP_400_BAD_REQUEST
-
+            return jsonify({"error": "Invalid JSON Schema"}), \
+                const.HTTP_400_BAD_REQUEST
 
         try:
-            scenario = data.get(const.SCENARIO);
+            scenario = data.get(const.SCENARIO)
             concurrency = data.get(const.CONCURRENCY)
             message_size = data.get(const.MESSAGE_SIZE)
 
-            is_valid, error = json_value_validator(scenario=scenario,concurrency=concurrency,message_size=message_size, type="point_pred")
+            is_valid, error = json_value_validator(
+                scenario=scenario, concurrency=concurrency,
+                message_size=message_size, type="point_pred"
+            )
             if not is_valid:
-                logger.error("Invalid values in JSON request: constraint violation: point_pred")
-                return jsonify({"error":error}), const.HTTP_422_UNPROCESSABLE_ENTITY
+                logger.error("Invalid values in JSON request: "
+                             "constraint violation: point_pred")
+                return jsonify({"error": error}), \
+                    const.HTTP_422_UNPROCESSABLE_ENTITY
         except Exception as e:
-            logger.exception("Uncaught exception occurred in request validation: ",e);
-            return jsonify({"error":"Uncaught exception occurred in request validation"}), const.HTTP_422_UNPROCESSABLE_ENTITY
+            logger.exception("Uncaught exception occurred "
+                             "in request validation: ", e)
+            return jsonify({"error": "Uncaught exception occurred in request "
+                            "validation"}), const.HTTP_422_UNPROCESSABLE_ENTITY
 
         if const.METHOD in data:
             if data[const.METHOD] == const.SAMPLING:
@@ -61,19 +69,29 @@ def point_prediction():
                 try:
                     if not (data.get(const.SAMPLE_COUNT) is None):
                         sample_count = data[const.SAMPLE_COUNT]
-                        is_valid, error = json_value_validator(sample_count=sample_count, type="sampling_check")
+                        is_valid, error = json_value_validator(
+                            sample_count=sample_count, type="sampling_check"
+                        )
                         if not is_valid:
-                            logger.error("Invalid values in JSON request: constraint violation for sample_count: point_pred")
-                            return jsonify({"error": error}), const.HTTP_422_UNPROCESSABLE_ENTITY
+                            logger.error("Invalid values in JSON request: "
+                                         "constraint violation for "
+                                         "sample_count: point_pred")
+                            return jsonify({"error": error}), \
+                                const.HTTP_422_UNPROCESSABLE_ENTITY
                 except Exception as e:
-                    logger.exception("Uncaught exception occurred in request validation block: ",e);
-                    return jsonify({"error": "Uncaught exception occurred in request validation"}), const.HTTP_422_UNPROCESSABLE_ENTITY
+                    logger.exception("Uncaught exception occurred "
+                                     "in request validation block: ", e)
+                    return jsonify({"error": "Uncaught exception "
+                                    "occurred in request validation"}), \
+                        const.HTTP_422_UNPROCESSABLE_ENTITY
 
         try:
-            prediction = poly_regressor.predict_point([scenario.capitalize(), concurrency, message_size], method=method, sample_count=sample_count);
-            tps,latency = formatter(tps=prediction, concurrency=concurrency);
+            prediction = poly_regressor.predict_point(
+                [scenario.capitalize(), concurrency, message_size],
+                method=method, sample_count=sample_count)
+            tps, latency = formatter(tps=prediction, concurrency=concurrency)
 
-            #Clear PyMC3 cache
+            # Clear PyMC3 cache
             memoize.clear_cache()
 
             return jsonify(
@@ -82,11 +100,14 @@ def point_prediction():
             )
 
         except Exception as e:
-            logger.exception("ML Model Error : point_pred: ",e)
-            return jsonify({"error": "Error during prediction or post processing"}), const.HTTP_500_INTERNAL_SERVER_ERROR
+            logger.exception("ML Model Error : point_pred: ", e)
+            return jsonify({"error": "Error during prediction "
+                            "or post processing"}), \
+                const.HTTP_500_INTERNAL_SERVER_ERROR
 
     else:
         return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @ai_capacity_planner.route('/max_tps', methods=['POST'])
 def max_tps_prediction():
@@ -101,20 +122,27 @@ def max_tps_prediction():
 
         if data is None:
             logger.error("Invalid JSON schema.")
-            return jsonify({"error": "Invalid JSON Schema"}), const.HTTP_400_BAD_REQUEST
-
+            return jsonify({"error": "Invalid JSON Schema"}),\
+                const.HTTP_400_BAD_REQUEST
 
         try:
-            scenario = data.get(const.SCENARIO);
+            scenario = data.get(const.SCENARIO)
             message_size = data.get(const.MESSAGE_SIZE)
 
-            is_valid, error = json_value_validator(scenario=scenario,message_size=message_size, type="max_tps")
+            is_valid, error = json_value_validator(
+                scenario=scenario, message_size=message_size, type="max_tps"
+            )
             if not is_valid:
-                logger.error("Invalid values in JSON request: constraint violation: max_tps")
-                return jsonify({"error": error}), const.HTTP_422_UNPROCESSABLE_ENTITY
+                logger.error("Invalid values in JSON request: "
+                             "constraint violation: max_tps")
+                return jsonify({"error": error}), \
+                    const.HTTP_422_UNPROCESSABLE_ENTITY
         except Exception as e:
-            logger.exception("Uncaught exception occurred in request validation block:", e);
-            return jsonify({"error": "Uncaught exception occurred in request validation"}), const.HTTP_422_UNPROCESSABLE_ENTITY
+            logger.exception("Uncaught exception occurred in request "
+                             "validation block:", e)
+            return jsonify({"error": "Uncaught exception occurred "
+                            "in request validation"}), \
+                const.HTTP_422_UNPROCESSABLE_ENTITY
 
         if const.METHOD in data:
             if data[const.METHOD] == const.SAMPLING:
@@ -122,19 +150,29 @@ def max_tps_prediction():
                 try:
                     if not (data.get(const.SAMPLE_COUNT) is None):
                         sample_count = data[const.SAMPLE_COUNT]
-                        is_valid, error = json_value_validator(sample_count=sample_count, type="sampling_check")
+                        is_valid, error = json_value_validator(
+                            sample_count=sample_count, type="sampling_check"
+                        )
                         if not is_valid:
-                            logger.error("Invalid values in JSON request: constraint violation: max_tps : sample_count")
-                            return jsonify({"error": error}), const.HTTP_422_UNPROCESSABLE_ENTITY
+                            logger.error("Invalid values in JSON request: "
+                                         "constraint violation: max_tps : "
+                                         "sample_count")
+                            return jsonify({"error": error}), \
+                                const.HTTP_422_UNPROCESSABLE_ENTITY
                 except Exception as e:
-                    logger.exception("Uncaught exception occurred in request validation block:", e);
+                    logger.exception("Uncaught exception occurred "
+                                     "in request validation block:", e)
                     return Response(status=const.HTTP_422_UNPROCESSABLE_ENTITY)
 
         try:
-            tps, concurrency = poly_regressor.max_tps([scenario.capitalize(), message_size], method=method, sample_count=sample_count)
-            tps, latency = formatter(tps=tps, concurrency=int(concurrency));
+            tps, concurrency = poly_regressor.max_tps(
+                [scenario.capitalize(), message_size],
+                method=method,
+                sample_count=sample_count
+            )
+            tps, latency = formatter(tps=tps, concurrency=int(concurrency))
 
-            #Clear PyMC3 Cache
+            # Clear PyMC3 Cache
             memoize.clear_cache()
 
             return jsonify(
@@ -144,8 +182,10 @@ def max_tps_prediction():
             )
 
         except Exception as e:
-            logger.exception("ML Model Error : max_tps: ",e)
-            return jsonify({"error": "Error during prediction or post processing"}), const.HTTP_500_INTERNAL_SERVER_ERROR
+            logger.exception("ML Model Error : max_tps: ", e)
+            return jsonify({"error": "Error during prediction "
+                            "or post processing"}), \
+                const.HTTP_500_INTERNAL_SERVER_ERROR
 
     else:
         return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)

@@ -17,6 +17,7 @@ import pymc3 as pm
 seed = 42
 np.random.seed(42)
 
+
 class BayesianPolynomialRegressor:
 
     def __init__(self):
@@ -37,8 +38,13 @@ class BayesianPolynomialRegressor:
         :return prediction:
         """
         with self.poly_model:
-            pred_samples = pm.sample_posterior_predictive(self.trace, vars=[self.f_pred], samples=sample_count, random_seed=seed)
-            y_pred, uncer = pred_samples["f_pred"].mean(axis=0), pred_samples["f_pred"].std(axis=0)
+            pred_samples = pm.sample_posterior_predictive(
+                self.trace, vars=[self.f_pred],
+                samples=sample_count,
+                random_seed=seed
+            )
+            y_pred = pred_samples["f_pred"].mean(axis=0), \
+                pred_samples["f_pred"].std(axis=0)
             return y_pred
 
     def predict_gp(self):
@@ -46,17 +52,23 @@ class BayesianPolynomialRegressor:
         Predict by obtaining analytical mean.
         :return mean as prediction:
         """
-        mu, var = self.gp.predict(Xnew=self.x_shared, point=self.trace[0], diag=True)
+        mu, var = self.gp.predict(
+            Xnew=self.x_shared,
+            point=self.trace[0],
+            diag=True
+        )
         return mu
 
-    def predict_point(self, data, method = None, sample_count=const.DEFAULT_SAMPLE_COUNT):
+    def predict_point(self, data, method=None,
+                      sample_count=const.DEFAULT_SAMPLE_COUNT):
         """
         Get TPS prediction for a single data point
-        Set data for prediction as a shared variable. Call appropiate prediction method.
+        Set data for prediction as a shared variable.
+        all appropriate prediction method.
         :param data: Concurrency and Message Size
         :return TPS and Little's law Latency:
         """
-        x_val = data;
+        x_val = data
         x_val[0] = self.encoder.transform([x_val[0]])[0]
         x_val = self.scaler.transform([x_val])
 
@@ -69,28 +81,32 @@ class BayesianPolynomialRegressor:
             prediction = self.predict(sample_count=sample_count)
             return prediction
 
-
-    def max_tps(self, data, method = const.NO_SAMPLING, sample_count=const.DEFAULT_SAMPLE_COUNT):
+    def max_tps(self, data, method=const.NO_SAMPLING,
+                sample_count=const.DEFAULT_SAMPLE_COUNT):
         """
         Get maximum TPS prediction for a given scenario and message size
-        Set data for prediction as a shared variable. Call appropiate prediction method.
+        Set data for prediction as a shared variable. Call appropriate
+        prediction method.
         :param data: Scenario and Message Size
         :return TPS and Little's law Latency:
         """
         prediction_data_list = []
-        scenario = data[0];
-        message_size = data[1];
+        scenario = data[0]
+        message_size = data[1]
         max_tps_concurrency = 1
 
-        for concurrency in range(0, const.MAX_CONCURRENCY, const.CONCURRENCY_STEP):
+        for concurrency in range(0, const.MAX_CONCURRENCY,
+                                 const.CONCURRENCY_STEP):
             if concurrency == 0:
                 prediction_data_list.append([scenario, 1, message_size])
             else:
-                prediction_data_list.append([scenario, concurrency, message_size])
+                prediction_data_list.append(
+                    [scenario, concurrency, message_size]
+                )
 
         data_array = np.array(prediction_data_list)
-        data_array[:, 0] = self.encoder.transform(data_array[:, 0]);
-        data_array = self.scaler.transform(data_array);
+        data_array[:, 0] = self.encoder.transform(data_array[:, 0])
+        data_array = self.scaler.transform(data_array)
 
         self.x_shared.set_value(data_array)
 
@@ -98,14 +114,15 @@ class BayesianPolynomialRegressor:
             predictions = self.predict_gp()
             index = np.argmax(predictions)
             if index != 0:
-                max_tps_concurrency = const.CONCURRENCY_STEP*index;
+                max_tps_concurrency = const.CONCURRENCY_STEP * index
             return max(predictions), max_tps_concurrency
 
         else:
             predictions = self.predict(sample_count=sample_count)
             index = np.argmax(predictions)
             if index != 0:
-                max_tps_concurrency = const.CONCURRENCY_STEP*index;
+                max_tps_concurrency = const.CONCURRENCY_STEP * index
             return max(predictions), max_tps_concurrency
+
 
 poly_regressor = BayesianPolynomialRegressor()

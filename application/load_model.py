@@ -26,7 +26,7 @@ def load_model():
         with open(const.model_path, 'rb') as buff:
             data = pickle.load(buff)
             logger.info("Model Loaded")
-            return  {
+            return {
                 "model": data['model'],
                 "trace": data['trace'],
                 "x_shared": data['X_New_shared'],
@@ -36,7 +36,7 @@ def load_model():
                 "gp": data['gp'],
             }
     except Exception as e:
-        logger.exception("Model Load Failed: ",e);
+        logger.exception("Model Load Failed: ", e)
 
 
 def get_model():
@@ -45,10 +45,9 @@ def get_model():
     :return model:
     """
     if path.exists(const.model_path):
-        model = load_model();
-        return model;
+        model = load_model()
+        return model
     else:
-        logger.exception("Model path does not exist");
+        logger.exception("Model path does not exist")
         logger.info("Exiting Application")
         exit(1)
-
