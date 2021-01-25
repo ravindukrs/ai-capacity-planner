@@ -11,7 +11,6 @@
 
 import numpy as np
 import application.constants as const
-from application.response_formatter import formatter
 from application.load_model import get_model
 import pymc3 as pm
 
@@ -65,7 +64,6 @@ class BayesianPolynomialRegressor:
 
         if method == const.NO_SAMPLING:
             prediction = self.predict_gp()
-            formatter(prediction[0])
             return prediction[0]
         else:
             prediction = self.predict(sample_count=sample_count)
@@ -79,14 +77,18 @@ class BayesianPolynomialRegressor:
         :param data: Scenario and Message Size
         :return TPS and Little's law Latency:
         """
-        my_list = []
+        prediction_data_list = []
         scenario = data[0];
         message_size = data[1];
+        max_tps_concurrency = 1
 
-        for concurrency in range(50, 1000, 10):
-            my_list.append([scenario, concurrency, message_size])
+        for concurrency in range(0, 1000, 10):
+            if concurrency == 0:
+                prediction_data_list.append([scenario, 1, message_size])
+            else:
+                prediction_data_list.append([scenario, concurrency, message_size])
 
-        data_array = np.array(my_list)
+        data_array = np.array(prediction_data_list)
         data_array[:, 0] = self.encoder.transform(data_array[:, 0]);
         data_array = self.scaler.transform(data_array);
 
@@ -94,8 +96,16 @@ class BayesianPolynomialRegressor:
 
         if method == const.NO_SAMPLING:
             predictions = self.predict_gp()
-            return max(predictions)
+            index = np.argmax(predictions)
+            if index != 0:
+                max_tps_concurrency = 10*index;
+            return max(predictions), max_tps_concurrency
 
         else:
             predictions = self.predict(sample_count=sample_count)
-            return max(predictions)
+            index = np.argmax(predictions)
+            if index != 0:
+                max_tps_concurrency = 10*index;
+            return max(predictions), max_tps_concurrency
+
+poly_regressor = BayesianPolynomialRegressor()

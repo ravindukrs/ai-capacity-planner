@@ -9,17 +9,16 @@
   entered into with WSO2 governing the purchase of this software and any
 """
 
-import sys
-from os.path import dirname
 from wsgi import app as ai_capacity_planner
 from flask import request, jsonify, Response
-from application.regressor import BayesianPolynomialRegressor
+from application.regressor import poly_regressor
 from pymc3 import memoize
 import application.constants as const
 from application.response_formatter import formatter, json_value_validator
 from application.logging_handler import logger
 
-@ai_capacity_planner.route('/')
+
+@ai_capacity_planner.route('/health')
 def check():
     """
     Check availability of service.
@@ -34,20 +33,27 @@ def point_prediction():
     :return TPS and Little's law Latency with HTTP 200:
     """
     if request.method == "POST":
-        data = request.get_json()
         method = const.DEFAULT_METHOD
         sample_count = const.DEFAULT_SAMPLE_COUNT
+        data = request.get_json()
+
+        if data is None:
+            logger.error("Invalid JSON schema.")
+            return jsonify({"error": "Invalid JSON Schema"}), const.HTTP_400_BAD_REQUEST
+
 
         try:
-            scenario = data[const.SCENARIO].capitalize();
-            concurrency = data[const.CONCURRENCY]
-            message_size = data[const.MESSAGE_SIZE]
-            if not (json_value_validator(scenario=scenario,concurrency=concurrency,message_size=message_size, type="point_pred")):
+            scenario = data.get(const.SCENARIO);
+            concurrency = data.get(const.CONCURRENCY)
+            message_size = data.get(const.MESSAGE_SIZE)
+
+            is_valid, error = json_value_validator(scenario=scenario,concurrency=concurrency,message_size=message_size, type="point_pred")
+            if not is_valid:
                 logger.error("Invalid values in JSON request: constraint violation: point_pred")
-                return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)
+                return jsonify({"error":error}), const.HTTP_422_UNPROCESSABLE_ENTITY
         except Exception as e:
-            logger.exception("Invalid JSON Format: point_pred");
-            return Response(status=const.HTTP_422_UNPROCESSABLE_ENTITY)
+            logger.exception("Uncaught exception occurred in request validation: ",e);
+            return jsonify({"error":"Uncaught exception occurred in request validation"}), const.HTTP_422_UNPROCESSABLE_ENTITY
 
         if const.METHOD in data:
             if data[const.METHOD] == const.SAMPLING:
@@ -55,16 +61,16 @@ def point_prediction():
                 try:
                     if not (data.get(const.SAMPLE_COUNT) is None):
                         sample_count = data[const.SAMPLE_COUNT]
-                        if not (json_value_validator(sample_count=sample_count, type="sampling_check")):
+                        is_valid, error = json_value_validator(sample_count=sample_count, type="sampling_check")
+                        if not is_valid:
                             logger.error("Invalid values in JSON request: constraint violation for sample_count: point_pred")
-                            return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)
+                            return jsonify({"error": error}), const.HTTP_422_UNPROCESSABLE_ENTITY
                 except Exception as e:
-                    logger.exception("Invalid JSON Format: point_pred");
-                    return Response(status=const.HTTP_422_UNPROCESSABLE_ENTITY)
+                    logger.exception("Uncaught exception occurred in request validation block: ",e);
+                    return jsonify({"error": "Uncaught exception occurred in request validation"}), const.HTTP_422_UNPROCESSABLE_ENTITY
 
         try:
-            poly_regressor = BayesianPolynomialRegressor()
-            prediction = poly_regressor.predict_point([scenario, concurrency, message_size], method=method, sample_count=sample_count);
+            prediction = poly_regressor.predict_point([scenario.capitalize(), concurrency, message_size], method=method, sample_count=sample_count);
             tps,latency = formatter(tps=prediction, concurrency=concurrency);
 
             #Clear PyMC3 cache
@@ -76,8 +82,11 @@ def point_prediction():
             )
 
         except Exception as e:
-            logger.exception("ML Model Error : point_pred")
-            return Response(status=const.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("ML Model Error : point_pred: ",e)
+            return jsonify({"error": "Error during prediction or post processing"}), const.HTTP_500_INTERNAL_SERVER_ERROR
+
+    else:
+        return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)
 
 @ai_capacity_planner.route('/max_tps', methods=['POST'])
 def max_tps_prediction():
@@ -90,15 +99,22 @@ def max_tps_prediction():
         method = const.DEFAULT_METHOD
         sample_count = const.DEFAULT_SAMPLE_COUNT
 
+        if data is None:
+            logger.error("Invalid JSON schema.")
+            return jsonify({"error": "Invalid JSON Schema"}), const.HTTP_400_BAD_REQUEST
+
+
         try:
-            scenario = data[const.SCENARIO].capitalize();
-            message_size = data[const.MESSAGE_SIZE]
-            if not (json_value_validator(scenario=scenario,message_size=message_size, type="max_tps")):
+            scenario = data.get(const.SCENARIO);
+            message_size = data.get(const.MESSAGE_SIZE)
+
+            is_valid, error = json_value_validator(scenario=scenario,message_size=message_size, type="max_tps")
+            if not is_valid:
                 logger.error("Invalid values in JSON request: constraint violation: max_tps")
-                return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)
+                return jsonify({"error": error}), const.HTTP_422_UNPROCESSABLE_ENTITY
         except Exception as e:
-            logger.exception("Invalid JSON Format: max_tps");
-            return Response(status=const.HTTP_422_UNPROCESSABLE_ENTITY)
+            logger.exception("Uncaught exception occurred in request validation block:", e);
+            return jsonify({"error": "Uncaught exception occurred in request validation"}), const.HTTP_422_UNPROCESSABLE_ENTITY
 
         if const.METHOD in data:
             if data[const.METHOD] == const.SAMPLING:
@@ -106,25 +122,30 @@ def max_tps_prediction():
                 try:
                     if not (data.get(const.SAMPLE_COUNT) is None):
                         sample_count = data[const.SAMPLE_COUNT]
-                        if not (json_value_validator(sample_count=sample_count, type="sampling_check")):
+                        is_valid, error = json_value_validator(sample_count=sample_count, type="sampling_check")
+                        if not is_valid:
                             logger.error("Invalid values in JSON request: constraint violation: max_tps : sample_count")
-                            return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)
+                            return jsonify({"error": error}), const.HTTP_422_UNPROCESSABLE_ENTITY
                 except Exception as e:
-                    logger.exception("Invalid JSON Format: point_pred");
+                    logger.exception("Uncaught exception occurred in request validation block:", e);
                     return Response(status=const.HTTP_422_UNPROCESSABLE_ENTITY)
 
         try:
-            poly_regressor = BayesianPolynomialRegressor()
-            tps = poly_regressor.max_tps([scenario, message_size], method=method, sample_count=sample_count)
-            tps = formatter(tps=tps);
+            tps, concurrency = poly_regressor.max_tps([scenario.capitalize(), message_size], method=method, sample_count=sample_count)
+            tps, latency = formatter(tps=tps, concurrency=int(concurrency));
 
             #Clear PyMC3 Cache
             memoize.clear_cache()
 
             return jsonify(
                 max_tps=tps,
+                latency=latency,
+                concurrency=int(concurrency)
             )
 
         except Exception as e:
-            logger.exception("ML Model Error : max_tps")
-            return Response(status=const.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("ML Model Error : max_tps: ",e)
+            return jsonify({"error": "Error during prediction or post processing"}), const.HTTP_500_INTERNAL_SERVER_ERROR
+
+    else:
+        return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)

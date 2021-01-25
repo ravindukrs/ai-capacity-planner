@@ -11,6 +11,7 @@
 
 import math
 import numbers
+from application.logging_handler import logger
 
 def formatter(tps, concurrency=None):
     """
@@ -30,7 +31,7 @@ def formatter(tps, concurrency=None):
     else:
         #Calculate Latency with Little's Law
         latency = concurrency/tps*1000;
-        latency = math.ceil(latency * 100.0) / 100.0
+        latency = round(latency, 2)
         return tps, latency
 
 
@@ -47,28 +48,61 @@ def json_value_validator(scenario=None, concurrency=None, message_size=None, sam
     is_valid = True
 
     if type == "point_pred" or type == "max_tps":
+        if not isinstance(scenario, str):
+            error = "Scenario is undefined or not a String"
+            logger.error(error)
+            return False, error
+
+        if scenario.capitalize() != "Passthrough" and scenario.capitalize() != "Transformation":
+            error = "Scenario defined is not valid. Expected 'Transformation' or 'Passthrough'"
+            logger.error(error)
+            return False, error
 
         if not isinstance(message_size, numbers.Number):
-            is_valid = is_valid * False;
-
-        if scenario != "Passthrough" and scenario != "Transformation":
-            is_valid = is_valid * False;
+            error = "Message Size undefined or not a number"
+            logger.error(error)
+            return False, error
 
         if message_size < 1 or message_size > 102400:
-            is_valid = is_valid * False;
+            error = "Message size is not in range. Supported range 1 - 102400"
+            logger.error(error)
+            return False, error
 
     if type == "point_pred":
         if not isinstance(concurrency, numbers.Number):
-            is_valid = is_valid * False;
+            error = "Concurrency is undefined or not a number. Expected an Integer"
+            logger.error(error)
+            return False, error
+
+        if not isinstance(concurrency, int):
+            error = "Concurrency is not an integer. Expected an integer."
+            logger.error(error)
+            return False, error
 
         if concurrency < 1 or concurrency > 1000:
-            is_valid = is_valid * False;
+            error = "Message size is not in range. Supported range 1 - 1000"
+            logger.error(error)
+            return False, error
 
     if type == "sampling_check":
         if not isinstance(sample_count, numbers.Number):
-            is_valid = is_valid * False;
+            error = "Sample Count is not an integer. Expected an integer."
+            logger.error(error)
+            return False, error
+
+        if not isinstance(sample_count, int):
+            error = "Sample Count is not an integer. Expected an integer."
+            logger.error(error)
+            return False, error
 
         if not sample_count >= 1:
-            is_valid = is_valid * False;
+            error = "Sample Count is not in range. Supported range 1 - 5000"
+            logger.error(error)
+            return False, error
 
-    return is_valid
+        if not sample_count <= 5000:
+            error = "Sample Count is not in range. Supported range 1 - 5000"
+            logger.error(error)
+            return False, error
+
+    return is_valid, None

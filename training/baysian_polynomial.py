@@ -20,15 +20,26 @@ from sklearn.model_selection import KFold
 import pymc3 as pm
 from sklearn.metrics import mean_squared_error
 
-#RMSPE
 def root_mean_squared_percentage_error(y_true, prediction):
-  y_true, y_pred = np.array(y_true), np.array(prediction)
-  EPSILON =  1e-10
-  rmspe = (np.sqrt(np.mean(np.square((y_true - y_pred) / (y_true + EPSILON))))) * 100
-  return rmspe
+    """
+    Calculate root mean squared percentage error of predictions compared to y_values from dataset.
+    :param y_true: y_values (actual TPS) from Dataset
+    :param prediction: predicted TPS
+    :return rmspe: Root mean squared percentage error:
+    """
+    y_true, y_pred = np.array(y_true), np.array(prediction)
+    EPSILON =  1e-10
+    rmspe = (np.sqrt(np.mean(np.square((y_true - y_pred) / (y_true + EPSILON))))) * 100
+    return rmspe
 
 #Define MAPE function
 def mean_absolute_percentage_error(y_true, prediction):
+    """
+    Calculate mean absolute percentage error of predictions compared to y_values from dataset.
+    :param y_true: y_values (actual TPS) from Dataset
+    :param prediction: predicted TPS
+    :return rmspe: Mean Absolute Percentage error:
+    """
     y_true, y_pred = np.array(y_true), np.array(prediction)
     mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
     return mape
