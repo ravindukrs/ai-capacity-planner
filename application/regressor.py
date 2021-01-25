@@ -70,7 +70,7 @@ class BayesianPolynomialRegressor:
             return prediction
 
 
-    def max_tps(self, data, method = None, sample_count=2000):
+    def max_tps(self, data, method = const.NO_SAMPLING, sample_count=const.DEFAULT_SAMPLE_COUNT):
         """
         Get maximum TPS prediction for a given scenario and message size
         Set data for prediction as a shared variable. Call appropiate prediction method.
@@ -82,7 +82,7 @@ class BayesianPolynomialRegressor:
         message_size = data[1];
         max_tps_concurrency = 1
 
-        for concurrency in range(0, 1000, 10):
+        for concurrency in range(0, const.MAX_CONCURRENCY, const.CONCURRENCY_STEP):
             if concurrency == 0:
                 prediction_data_list.append([scenario, 1, message_size])
             else:
@@ -98,14 +98,14 @@ class BayesianPolynomialRegressor:
             predictions = self.predict_gp()
             index = np.argmax(predictions)
             if index != 0:
-                max_tps_concurrency = 10*index;
+                max_tps_concurrency = const.CONCURRENCY_STEP*index;
             return max(predictions), max_tps_concurrency
 
         else:
             predictions = self.predict(sample_count=sample_count)
             index = np.argmax(predictions)
             if index != 0:
-                max_tps_concurrency = 10*index;
+                max_tps_concurrency = const.CONCURRENCY_STEP*index;
             return max(predictions), max_tps_concurrency
 
 poly_regressor = BayesianPolynomialRegressor()
