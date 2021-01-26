@@ -1,0 +1,18 @@
+click
+Flask
+setuptools
+h5py
+itsdangerous
+Jinja2
+joblib
+MarkupSafe
+pandas
+pymc3 == 3.7
+python-dateutil
+pytz
+scikit-learn == 0.23.2
+Theano == 1.0.5
+threadpoolctl
+tqdm
+Werkzeug
+gunicorn
