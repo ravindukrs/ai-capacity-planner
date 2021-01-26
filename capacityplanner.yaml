@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    reloader.stakater.com/auto: "true"
+  labels:
+    choreo.component: capacityplanner
+  name: capacityplanner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      choreo.component: capacityplanner
+  template:
+    metadata:
+      labels:
+        choreo.component: capacityplanner
+      annotations:
+        linkerd.io/inject: enabled
+    spec:
+      securityContext:
+        runAsUser: 500
+        runAsGroup: 500
+        fsGroup: 500
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      - env:
+        - name: MODEL_STORAGE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: secret-capacityplanner
+              key: ACCESS_KEY
+        image: imageurl/capacityplanner-init:latest
+        name: capacityplanner-init
+        resources:
+          limits:
+            cpu: 300m
+            memory: 512Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - name: capacityplanner-model
+          mountPath: "/home/python-ai/choreo-ai-capacity-planner/model"
+        - name: capacityplanner-model-metadata
+          mountPath: "/home/python-ai/choreo-ai-capacity-planner/models.properties"
+          subPath: "models.properties"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+              drop:
+                - NET_RAW
+      containers:
+      - image: imageurl/capacityplanner:latest
+        name: capacityplanner
+        ports:
+        - containerPort: 5000
+          name: dm-port
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 1100m
+            memory: 2048Mi
+          requests:
+            cpu: 1000m
+            memory: 1536Mi
+        volumeMounts:
+        - name: capacityplanner-model
+          mountPath: "/home/python-ai/choreo-ai-capacity-planner/model/"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - NET_RAW
+      volumes:
+      - name: capacityplanner-model
+        emptyDir: {}
+      - name: capacityplanner-model-metadata
+        configMap:
+          defaultMode: 420
+          name: cm-capacityplanner
