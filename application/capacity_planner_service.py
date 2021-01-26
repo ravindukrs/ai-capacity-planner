@@ -9,7 +9,7 @@
   entered into with WSO2 governing the purchase of this software and any
 """
 
-from wsgi import app as ai_capacity_planner
+from application.wsgi import app as ai_capacity_planner
 from flask import request, jsonify, Response
 from application.regressor import poly_regressor
 from pymc3 import memoize
