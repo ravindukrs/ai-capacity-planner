@@ -13,6 +13,7 @@ import numpy as np
 import application.constants as const
 from application.load_model import get_model
 import pymc3 as pm
+from application.logging_handler import logger
 
 seed = 42
 np.random.seed(42)
@@ -20,16 +21,31 @@ np.random.seed(42)
 
 class BayesianPolynomialRegressor:
 
+    __instance = None
+
+    @staticmethod
+    def getInstance():
+        if BayesianPolynomialRegressor.__instance is None:
+            BayesianPolynomialRegressor()
+        return BayesianPolynomialRegressor.__instance
+
     def __init__(self):
-        model = get_model()
-        self.poly_model = model["model"]
-        self.trace = model["trace"]
-        self.x_shared = model["x_shared"]
-        self.f_pred = model["f_pred"]
-        self.scaler = model["scaler"]
-        self.encoder = model["encoder"]
-        self.gp = model["gp"]
-        del model
+        if BayesianPolynomialRegressor.__instance is not None:
+            logger.exception("Tried to reassign instance in "
+                             "regressor.py. Invalid operation")
+            raise Exception("Instance already assigned")
+        else:
+            model = get_model()
+            self.poly_model = model["model"]
+            self.trace = model["trace"]
+            self.x_shared = model["x_shared"]
+            self.f_pred = model["f_pred"]
+            self.scaler = model["scaler"]
+            self.encoder = model["encoder"]
+            self.gp = model["gp"]
+            del model
+
+            BayesianPolynomialRegressor.__instance = self
 
     def predict(self, sample_count=const.DEFAULT_SAMPLE_COUNT):
         """
@@ -125,4 +141,5 @@ class BayesianPolynomialRegressor:
             return max(predictions), max_tps_concurrency
 
 
-poly_regressor = BayesianPolynomialRegressor()
+def get_regressor():
+    return BayesianPolynomialRegressor.getInstance()

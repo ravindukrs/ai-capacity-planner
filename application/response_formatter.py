@@ -9,7 +9,7 @@
   entered into with WSO2 governing the purchase of this software and any
 """
 
-import math
+import sys
 import numbers
 from application.logging_handler import logger
 
@@ -22,11 +22,11 @@ def formatter(tps, concurrency=None):
     :return TPS(max tps) or TPS and Little's law Latency:
     """
     # Round up TPS
-    tps = math.ceil(tps * 100.0) / 100.0
-    if tps < 1:
-        tps = 1
+    tps = round(tps, 2)
+    if tps <= 0:
+        tps = sys.float_info.epsilon
 
-    # Calcuate Latency
+    # Calculate Latency
     if not isinstance(concurrency, numbers.Number):
         return tps
     else:
@@ -34,6 +34,14 @@ def formatter(tps, concurrency=None):
         latency = concurrency / tps * 1000
         latency = round(latency, 2)
         return tps, latency
+
+
+def get_data_type(value):
+    """
+    Get data type
+        :param arg: value for which to determine data type
+    """
+    return str(type(value).__name__)
 
 
 def json_value_validator(scenario=None, concurrency=None,
@@ -49,72 +57,70 @@ def json_value_validator(scenario=None, concurrency=None,
     :return is_valid: Validity of JSON:
     """
     is_valid = True
-
     if type == "point_pred" or type == "max_tps":
         if not isinstance(scenario, str):
-            error = "Scenario is undefined or not a String"
+            error = "Invalid Scenario. Expected String, received " + \
+                    get_data_type(scenario)
             logger.error(error)
             return False, error
 
         if scenario.capitalize() != "Passthrough" \
                 and scenario.capitalize() != "Transformation":
-            error = "Scenario defined is not valid. Expected " \
-                    "'Transformation' or 'Passthrough'"
+            error = "Invalid Scenario. Expected " \
+                    "'Transformation' or 'Passthrough', received " + \
+                    str(scenario)
             logger.error(error)
             return False, error
 
         if not isinstance(message_size, numbers.Number):
-            error = "Message Size undefined or not a number"
+            error = "Invalid Message Size. Expected Integer or Float, " \
+                    "received " + get_data_type(message_size)
             logger.error(error)
             return False, error
 
         if message_size < 1 or message_size > 102400:
-            error = "Message size is not in range. " \
-                    "Supported range 1 - 102400"
+            error = "Invalid Message Size. " \
+                    "Supported range 1 - 102400, received " + \
+                    str(message_size)
             logger.error(error)
             return False, error
 
     if type == "point_pred":
-        if not isinstance(concurrency, numbers.Number):
-            error = "Concurrency is undefined or not a number. " \
-                    "Expected an Integer"
-            logger.error(error)
-            return False, error
 
         if not isinstance(concurrency, int):
-            error = "Concurrency is not an integer. " \
-                    "Expected an integer."
+            error = "Invalid Concurrency. " \
+                    "Expected an integer, received " + \
+                    get_data_type(concurrency)
             logger.error(error)
             return False, error
 
         if concurrency < 1 or concurrency > 1000:
             error = "Message size is not in range. " \
-                    "Supported range 1 - 1000"
+                    "Supported range between 0 and 1000, received " + \
+                    str(concurrency)
             logger.error(error)
             return False, error
 
     if type == "sampling_check":
-        if not isinstance(sample_count, numbers.Number):
-            error = "Sample Count is not an integer. " \
-                    "Expected an integer."
-            logger.error(error)
-            return False, error
 
         if not isinstance(sample_count, int):
-            error = "Sample Count is not an integer. " \
-                    "Expected an integer."
+            error = "Invalid sample count. " \
+                    "Expected an integer, received " + \
+                    get_data_type(sample_count)
             logger.error(error)
             return False, error
 
         if not sample_count >= 1:
             error = "Sample Count is not in range. " \
-                    "Supported range 1 - 5000"
+                    "Supported range 1 - 5000, received " + \
+                    str(sample_count)
             logger.error(error)
             return False, error
 
         if not sample_count <= 5000:
             error = "Sample Count is not in range. " \
-                    "Supported range 1 - 5000"
+                    "Supported range 1 - 5000 , received " + \
+                    str(sample_count)
             logger.error(error)
             return False, error
 

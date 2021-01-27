@@ -11,11 +11,11 @@
 
 from application.wsgi import app as ai_capacity_planner
 from flask import request, jsonify, Response
-from application.regressor import poly_regressor
 from pymc3 import memoize
 import application.constants as const
 from application.response_formatter import formatter, json_value_validator
 from application.logging_handler import logger
+from application.regressor import get_regressor
 
 
 @ai_capacity_planner.route('/health')
@@ -39,8 +39,8 @@ def point_prediction():
         data = request.get_json()
 
         if data is None:
-            logger.error("Invalid JSON schema.")
-            return jsonify({"error": "Invalid JSON Schema"}), \
+            logger.error("Payload is missing.")
+            return jsonify({"error": "Payload is missing"}), \
                 const.HTTP_400_BAD_REQUEST
 
         try:
@@ -54,8 +54,8 @@ def point_prediction():
             )
             if not is_valid:
                 logger.error("Invalid values in JSON request: "
-                             "constraint violation: point_pred")
-                return jsonify({"error": error}), \
+                             "constraint violation: point_pred: "+error)
+                return jsonify({"error": "Invalid Request: "+error}), \
                     const.HTTP_422_UNPROCESSABLE_ENTITY
         except Exception as e:
             logger.exception("Uncaught exception occurred "
@@ -75,8 +75,10 @@ def point_prediction():
                         if not is_valid:
                             logger.error("Invalid values in JSON request: "
                                          "constraint violation for "
-                                         "sample_count: point_pred")
-                            return jsonify({"error": error}), \
+                                         "sample_count: point_pred "+error)
+                            return jsonify({
+                                "error": "Invalid Request: "+error
+                            }), \
                                 const.HTTP_422_UNPROCESSABLE_ENTITY
                 except Exception as e:
                     logger.exception("Uncaught exception occurred "
@@ -86,7 +88,7 @@ def point_prediction():
                         const.HTTP_422_UNPROCESSABLE_ENTITY
 
         try:
-            prediction = poly_regressor.predict_point(
+            prediction = get_regressor().predict_point(
                 [scenario.capitalize(), concurrency, message_size],
                 method=method, sample_count=sample_count)
             tps, latency = formatter(tps=prediction, concurrency=concurrency)
@@ -121,8 +123,8 @@ def max_tps_prediction():
         sample_count = const.DEFAULT_SAMPLE_COUNT
 
         if data is None:
-            logger.error("Invalid JSON schema.")
-            return jsonify({"error": "Invalid JSON Schema"}),\
+            logger.error("Payload is missing.")
+            return jsonify({"error": "Payload is missing"}),\
                 const.HTTP_400_BAD_REQUEST
 
         try:
@@ -134,8 +136,8 @@ def max_tps_prediction():
             )
             if not is_valid:
                 logger.error("Invalid values in JSON request: "
-                             "constraint violation: max_tps")
-                return jsonify({"error": error}), \
+                             "constraint violation: max_tps: "+error)
+                return jsonify({"error": "Invalid Request: "+error}), \
                     const.HTTP_422_UNPROCESSABLE_ENTITY
         except Exception as e:
             logger.exception("Uncaught exception occurred in request "
@@ -157,7 +159,9 @@ def max_tps_prediction():
                             logger.error("Invalid values in JSON request: "
                                          "constraint violation: max_tps : "
                                          "sample_count")
-                            return jsonify({"error": error}), \
+                            return jsonify({
+                                "error": "Invalid Request: "+error
+                            }), \
                                 const.HTTP_422_UNPROCESSABLE_ENTITY
                 except Exception as e:
                     logger.exception("Uncaught exception occurred "
@@ -165,7 +169,7 @@ def max_tps_prediction():
                     return Response(status=const.HTTP_422_UNPROCESSABLE_ENTITY)
 
         try:
-            tps, concurrency = poly_regressor.max_tps(
+            tps, concurrency = get_regressor().max_tps(
                 [scenario.capitalize(), message_size],
                 method=method,
                 sample_count=sample_count

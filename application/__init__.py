@@ -9,9 +9,11 @@
   entered into with WSO2 governing the purchase of this software and any
 """
 from flask import Flask
+from application.regressor import BayesianPolynomialRegressor
 
 
 def create_app():
     app = Flask(__name__, instance_relative_config=False)
     with app.app_context():
+        BayesianPolynomialRegressor()
         return app
