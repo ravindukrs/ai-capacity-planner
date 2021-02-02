@@ -1,0 +1,3 @@
+outs:
+- md5: fb0709977fc4081e5764848e18a74646
+  path: bayesian_regressor.p

@@ -13,7 +13,6 @@ set -e
 #"""
 
 
-MODEL_STORAGE_CONNECTION_STRING="ACCESS KEY"
 echo "Starting Init Container"
 
 bash generate_dvc_metadata.sh models.properties

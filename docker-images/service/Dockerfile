@@ -11,7 +11,7 @@
 FROM ubuntu:20.04 AS builder
 
 RUN apt-get update && \
-    apt-get install -y --install-recommends python3.8=3.8.5-1~20.04 python3-dev build-essential \
+    apt-get install -y --install-recommends python3.8=3.8.5-1~20.04 \
       python3-pip=20.0.2-5ubuntu1.1 \
       python3-venv=3.8.2-0ubuntu2 && \
     apt-get clean && \
@@ -25,8 +25,6 @@ RUN pip3 --no-cache-dir install wheel==0.36.1 && \
     pip3 --no-cache-dir install -r requirements.txt  # building wheel for modules fail if wheel is not
                                                      # already installed. Hence the reason to execute a separate pip3
                                                      # install for wheel before installing requirements
-# RUN pip3 --no-cache-dir install -r requirements.txt
-
 
 FROM ubuntu:20.04
 
@@ -36,7 +34,7 @@ ARG USER=python-ai
 RUN groupadd --system --gid 500 ${GROUP} && \
     useradd --system --create-home --home-dir /home/${USER} --no-log-init --gid 500 --uid 500 ${USER} && \
     apt-get update && \
-    apt-get install -y --install-recommends libgomp1=10.2.0-5ubuntu1~20.04 python3-dev build-essential\
+    apt-get install -y --install-recommends libgomp1=10.2.0-5ubuntu1~20.04 \
       python3.8=3.8.5-1~20.04 \
       python3-venv=3.8.2-0ubuntu2 && \
     apt-get clean && \
