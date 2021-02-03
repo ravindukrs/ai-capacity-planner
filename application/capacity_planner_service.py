@@ -91,7 +91,7 @@ def point_prediction():
             prediction = get_regressor().predict_point(
                 [scenario.capitalize(), concurrency, message_size],
                 method=method, sample_count=sample_count)
-            tps, latency = formatter(tps=prediction[0], concurrency=concurrency)
+            tps, latency = formatter(tps=prediction, concurrency=concurrency)
 
             # Clear PyMC3 cache
             memoize.clear_cache()

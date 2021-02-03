@@ -95,7 +95,7 @@ class BayesianPolynomialRegressor:
             return prediction[0]
         else:
             prediction = self.predict(sample_count=sample_count)
-            return prediction
+            return prediction[0]
 
     def max_tps(self, data, method=const.NO_SAMPLING,
                 sample_count=const.DEFAULT_SAMPLE_COUNT):
