@@ -138,7 +138,7 @@ class BayesianPolynomialRegressor:
             index = np.argmax(predictions)
             if index != 0:
                 max_tps_concurrency = const.CONCURRENCY_STEP * index
-            return max(predictions), max_tps_concurrency
+            return max(predictions[0]), max_tps_concurrency
 
 
 def get_regressor():
