@@ -12,9 +12,75 @@
 
 import unittest
 from application.regressor import get_regressor
+from application.response_formatter import formatter, json_value_validator
 import application.constants as const
 
 class TestCapacityPlanner(unittest.TestCase):
+
+    # Tests for Response Formatter (Round TPS or Calculate Little's Law Latency)
+    def test_response_formatter_tps_negetive(self):
+        tps = formatter(-1);
+        self.assertEqual(2.220446049250313e-16, tps)
+
+    def test_response_formatter_tps_latency_negetive(self):
+        tps, latency = formatter(-1, 5);
+        self.assertEqual(2.220446049250313e-16, tps)
+        self.assertEqual(2.251799813685248e+19, latency)
+
+    def test_response_formatter_tps_latency(self):
+        tps, latency = formatter(1321.32132433234, 50);
+        self.assertEqual(1321.32, tps)
+        self.assertEqual(37.84, latency)
+
+    # Tests for Request Validator
+    def test_json_value_validator_valid_point_pred(self):
+        is_valid, error = json_value_validator(scenario="Passthrough", concurrency=100,
+                         message_size=1200)
+        self.assertEqual(True, is_valid)
+        self.assertEqual(None, error)
+
+    def test_json_value_validator_valid_sample_check(self):
+        is_valid, error = json_value_validator(scenario="Passthrough", concurrency=100,
+                                                message_size=1200,
+                                                sample_count=10, type="sampling_check")
+        self.assertEqual(True, is_valid)
+        self.assertEqual(None, error)
+
+    def test_json_value_validator_invalid_sample_counts(self):
+        invalid_sample_counts = ["string", -1, 0, 5001, 100.1, {100}, [100], None]
+        for sample_count in invalid_sample_counts:
+            is_valid, error = json_value_validator(scenario="Passthrough", concurrency=100,
+                                                    message_size=1200,
+                                                    sample_count=sample_count ,type="sampling_check")
+            self.assertEqual(False, is_valid)
+            self.assertIsNotNone(error)
+
+    def test_json_value_validator_invalid_scenario(self):
+        invalid_scenario = ["string", 1, 1.1, True, {"Passthrough"}, ["Passthrough"], None]
+        for scenario in invalid_scenario:
+            is_valid, error = json_value_validator(scenario=scenario, concurrency=100,
+                                                    message_size=1200)
+            self.assertEqual(False, is_valid)
+            self.assertIsNotNone(error)
+
+
+    def test_json_value_validator_invalid_concurrencies(self):
+        invalid_concurrencies = ["string", 0, -1, 0.1, 100.21, 1001, {100}, [100], None]
+        for concurrency in invalid_concurrencies:
+            is_valid, error = json_value_validator(scenario="Passthrough", concurrency=concurrency,
+                                                    message_size=1200)
+            self.assertEqual(False, is_valid)
+            self.assertIsNotNone(error)
+
+    def test_json_value_validator_invalid_message_sizes(self):
+        invalid_message_sizes = ["string", 0, 102400.1, {100}, [100], None]
+        for message_size in invalid_message_sizes:
+            is_valid, error = json_value_validator(scenario="Passthrough", concurrency=100,
+                                                    message_size=message_size)
+            self.assertEqual(False, is_valid)
+            self.assertIsNotNone(error)
+
+    # Tests for Predictions
     def test_max_tps_no_sampling(self):
         tps, concurrency = get_regressor().max_tps(
             ["Passthrough", 10240],
