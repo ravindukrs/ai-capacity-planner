@@ -17,6 +17,6 @@ echo "Starting Init Container"
 
 bash generate_dvc_metadata.sh models.properties
 dvc remote add -d -f --local storageremote azure://modelcontainer
-dvc remote modify --local storageremote connection_string "$MODEL_STORAGE_CONNECTION_STRING"
+dvc remote modify --local storageremote connection_string "DefaultEndpointsProtocol=https;AccountName=choreoaicapplanner;AccountKey=$ACCESS_KEY;EndpointSuffix=core.windows.net"
 dvc pull
 dvc remote remove --local storageremote

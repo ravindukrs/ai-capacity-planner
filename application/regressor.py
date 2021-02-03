@@ -95,7 +95,7 @@ class BayesianPolynomialRegressor:
             return prediction[0]
         else:
             prediction = self.predict(sample_count=sample_count)
-            return prediction
+            return prediction[0]
 
     def max_tps(self, data, method=const.NO_SAMPLING,
                 sample_count=const.DEFAULT_SAMPLE_COUNT):
@@ -138,7 +138,7 @@ class BayesianPolynomialRegressor:
             index = np.argmax(predictions)
             if index != 0:
                 max_tps_concurrency = const.CONCURRENCY_STEP * index
-            return max(predictions), max_tps_concurrency
+            return max(predictions[0]), max_tps_concurrency
 
 
 def get_regressor():
