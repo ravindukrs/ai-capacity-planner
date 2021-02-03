@@ -1,5 +1,9 @@
-# Compiled class file
-*.class
+venv
+.idea
+__pycache__
+application/__pycache__
+model/bayesian_regressor.p
+deployment.yaml
 
 # Log file
 *.log
