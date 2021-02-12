@@ -14,9 +14,10 @@ set -e
 
 
 echo "Starting Init Container"
-
+# This path comes with CSI secret store
+MODEL_CONNECTION_STRING="$(cat /mnt/csi/secret-capacity-planner/MODEL-CONNECTION-STRING)"
 bash generate_dvc_metadata.sh models.properties
 dvc remote add -d -f --local storageremote azure://modelcontainer
-dvc remote modify --local storageremote connection_string "DefaultEndpointsProtocol=https;AccountName=choreoaicapplanner;AccountKey=$ACCESS_KEY;EndpointSuffix=core.windows.net"
+dvc remote modify --local storageremote connection_string "$MODEL_CONNECTION_STRING"
 dvc pull
 dvc remote remove --local storageremote
