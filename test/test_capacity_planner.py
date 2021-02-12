@@ -86,7 +86,7 @@ class TestCapacityPlanner(unittest.TestCase):
             ["Passthrough", 10240],
             method=const.NO_SAMPLING,
         )
-        self.assertEqual(2482.6010321806693, tps)
+        self.assertEqual(round(2482.6010321806693, 2), round(tps, 2))
         self.assertEqual(60, concurrency)
 
     def test_max_tps_sampling(self):
@@ -95,20 +95,20 @@ class TestCapacityPlanner(unittest.TestCase):
             method=const.SAMPLING,
             sample_count=100
         )
-        self.assertEqual(2499.7054760374053, tps)
+        self.assertEqual(round(2499.7054760374053, 2), round(tps, 2))
         self.assertEqual(20, concurrency)
 
     def test_prediction_sampling(self):
         tps = get_regressor().predict_point(
             ["Passthrough", 100, 10240],
             method=const.SAMPLING, sample_count=100)
-        self.assertEqual(2469.6123184650064, tps)
+        self.assertEqual(round(2469.6123184650064, 2), round(tps, 2))
 
     def test_prediction_no_sampling(self):
         tps = get_regressor().predict_point(
             ["Passthrough", 100, 10240],
             method=const.NO_SAMPLING)
-        self.assertEqual(2482.337454686785, tps)
+        self.assertEqual(round(2482.337454686785, 2), round(tps, 2))
 
 
 if __name__ == '__main__':
