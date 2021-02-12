@@ -86,7 +86,7 @@ class TestCapacityPlanner(unittest.TestCase):
             ["Passthrough", 10240],
             method=const.NO_SAMPLING,
         )
-        self.assertEqual(2482.6010321806693, tps)
+        self.assertEqual(round(2482.6010321806693, 2), round(tps, 2))
         self.assertEqual(60, concurrency)
 
     def test_max_tps_sampling(self):
