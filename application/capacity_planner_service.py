@@ -37,7 +37,7 @@ def readiness():
 @ai_capacity_planner.route('/ping', methods=['GET'])
 def ping_check():
     """
-    Check availability of service.
+    Check reachability of service.
     :return HTTP 200 Response:
     """
     return Response(status=const.HTTP_200_OK)
