@@ -11,9 +11,15 @@
 """
 
 import unittest
+from unittest import mock
+import json
+
+from application.capacity_planner_service import ai_capacity_planner
 from application.regressor import get_regressor
 from application.response_formatter import formatter, json_value_validator
 import application.constants as const
+from flask import Flask
+
 
 class TestCapacityPlanner(unittest.TestCase):
 
@@ -81,34 +87,93 @@ class TestCapacityPlanner(unittest.TestCase):
             self.assertIsNotNone(error)
 
     # Tests for Predictions
-    def test_max_tps_no_sampling(self):
+    @mock.patch('application.regressor.BayesianPolynomialRegressor.predict_gp', return_value=[1500])
+    def test_max_tps_no_sampling(self, mock_check_output):
         tps, concurrency = get_regressor().max_tps(
             ["Passthrough", 10240],
             method=const.NO_SAMPLING,
         )
-        self.assertEqual(round(2482.6010321806693, 2), round(tps, 2))
-        self.assertEqual(60, concurrency)
+        self.assertEqual(1500, tps)
+        self.assertEqual(1, concurrency)
 
-    def test_max_tps_sampling(self):
+    @mock.patch('application.regressor.BayesianPolynomialRegressor.predict', return_value=[[1500]])
+    def test_max_tps_sampling(self, mock_check_output):
         tps, concurrency = get_regressor().max_tps(
             ["Passthrough", 10240],
             method=const.SAMPLING,
             sample_count=100
         )
-        self.assertEqual(round(2499.7054760374053,2), round(tps,2))
-        self.assertEqual(20, concurrency)
+        self.assertEqual(1500, tps)
+        self.assertEqual(1, concurrency)
 
-    def test_prediction_sampling(self):
+
+    @mock.patch('application.regressor.BayesianPolynomialRegressor.predict', return_value=[1500])
+    def test_prediction_sampling(self, mock_check_output):
         tps = get_regressor().predict_point(
             ["Passthrough", 100, 10240],
             method=const.SAMPLING, sample_count=100)
-        self.assertEqual(round(2469.6123184650064, 2), round(tps,2))
+        self.assertEqual(1500, tps)
 
-    def test_prediction_no_sampling(self):
+
+    @mock.patch('application.regressor.BayesianPolynomialRegressor.predict_gp', return_value=[1500])
+    def test_prediction_no_sampling(self, mock_check_output):
         tps = get_regressor().predict_point(
             ["Passthrough", 100, 10240],
             method=const.NO_SAMPLING)
-        self.assertEqual(round(2482.337454686785, 2), round(tps,2 ))
+        self.assertEqual(1500, tps)
+
+    # Service Tests
+    @mock.patch('application.regressor.BayesianPolynomialRegressor.predict_gp', return_value=[1500])
+    def test_service_predict_performance_no_sampling(self, mock_check_output):
+            mock_request_headers = {'content-type': 'application/json'}
+            mock_request_data = {
+                "scenario": "Transformation",
+                "message_size": 1020,
+                "concurrency": 234
+            }
+            client = ai_capacity_planner.test_client()
+            url = '/predict_point'
+            response = client.post(url, data=json.dumps(mock_request_data), headers=mock_request_headers)
+            self.assertEqual(b'{"latency":156.0,"tps":1500}\n', response.get_data())
+
+    @mock.patch('application.regressor.BayesianPolynomialRegressor.predict', return_value=[1500])
+    def test_service_predict_performance_sampling(self, mock_check_output):
+            mock_request_headers = {'content-type': 'application/json'}
+            mock_request_data = {
+                "scenario": "Transformation",
+                "message_size": 1020,
+                "concurrency": 234,
+                "method": "sampling"
+            }
+            client = ai_capacity_planner.test_client()
+            url = '/predict_point'
+            response = client.post(url, data=json.dumps(mock_request_data), headers=mock_request_headers)
+            self.assertEqual(b'{"latency":156.0,"tps":1500}\n', response.get_data())
+
+    @mock.patch('application.regressor.BayesianPolynomialRegressor.predict', return_value=[[1500]])
+    def test_service_predict_max_performance_sampling(self, mock_check_output):
+            mock_request_headers = {'content-type': 'application/json'}
+            mock_request_data = {
+                "scenario": "Transformation",
+                "message_size": 1020,
+                "method": "sampling"
+            }
+            client = ai_capacity_planner.test_client()
+            url = '/max_tps'
+            response = client.post(url, data=json.dumps(mock_request_data), headers=mock_request_headers)
+            self.assertEqual(b'{"concurrency":1,"latency":0.67,"max_tps":1500}\n', response.get_data())
+
+    @mock.patch('application.regressor.BayesianPolynomialRegressor.predict_gp', return_value=[1500])
+    def test_service_predict_max_performance_no_sampling(self, mock_check_output):
+            mock_request_headers = {'content-type': 'application/json'}
+            mock_request_data = {
+                "scenario": "Transformation",
+                "message_size": 1020,
+            }
+            client = ai_capacity_planner.test_client()
+            url = '/max_tps'
+            response = client.post(url, data=json.dumps(mock_request_data), headers=mock_request_headers)
+            self.assertEqual(b'{"concurrency":1,"latency":0.67,"max_tps":1500}\n', response.get_data())
 
 
 if __name__ == '__main__':
