@@ -13,12 +13,10 @@
 import unittest
 from unittest import mock
 import json
-
 from application.capacity_planner_service import ai_capacity_planner
 from application.regressor import get_regressor
 from application.response_formatter import formatter, json_value_validator
 import application.constants as const
-from flask import Flask
 
 
 class TestCapacityPlanner(unittest.TestCase):
