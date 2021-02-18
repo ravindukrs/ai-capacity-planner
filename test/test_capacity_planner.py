@@ -130,7 +130,7 @@ class TestCapacityPlanner(unittest.TestCase):
                 "concurrency": 234
             }
             client = ai_capacity_planner.test_client()
-            url = '/predict_point'
+            url = '/estimator/performance'
             response = client.post(url, data=json.dumps(mock_request_data), headers=mock_request_headers)
             self.assertEqual(b'{"latency":156.0,"tps":1500}\n', response.get_data())
 
@@ -144,7 +144,7 @@ class TestCapacityPlanner(unittest.TestCase):
                 "method": "sampling"
             }
             client = ai_capacity_planner.test_client()
-            url = '/predict_point'
+            url = '/estimator/performance'
             response = client.post(url, data=json.dumps(mock_request_data), headers=mock_request_headers)
             self.assertEqual(b'{"latency":156.0,"tps":1500}\n', response.get_data())
 
@@ -157,7 +157,7 @@ class TestCapacityPlanner(unittest.TestCase):
                 "method": "sampling"
             }
             client = ai_capacity_planner.test_client()
-            url = '/max_tps'
+            url = '/estimator/max-performance'
             response = client.post(url, data=json.dumps(mock_request_data), headers=mock_request_headers)
             self.assertEqual(b'{"concurrency":1,"latency":0.67,"max_tps":1500}\n', response.get_data())
 
@@ -169,7 +169,7 @@ class TestCapacityPlanner(unittest.TestCase):
                 "message_size": 1020,
             }
             client = ai_capacity_planner.test_client()
-            url = '/max_tps'
+            url = '/estimator/max-performance'
             response = client.post(url, data=json.dumps(mock_request_data), headers=mock_request_headers)
             self.assertEqual(b'{"concurrency":1,"latency":0.67,"max_tps":1500}\n', response.get_data())
 
