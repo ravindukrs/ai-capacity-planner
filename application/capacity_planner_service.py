@@ -43,7 +43,7 @@ def ping_check():
     return Response(status=const.HTTP_200_OK)
 
 
-@ai_capacity_planner.route('/predict_point', methods=['POST'])
+@ai_capacity_planner.route('/estimator/performance', methods=['POST'])
 def point_prediction():
     """
     Return Latency and TPS for a given scenario, message size and concurrency
@@ -127,7 +127,7 @@ def point_prediction():
         return Response(status=const.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@ai_capacity_planner.route('/max_tps', methods=['POST'])
+@ai_capacity_planner.route('/estimator/max-performance', methods=['POST'])
 def max_tps_prediction():
     """
     Return Maximum TPS for a given scenario and message size
