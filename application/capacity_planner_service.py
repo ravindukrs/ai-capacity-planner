@@ -16,12 +16,28 @@ import application.constants as const
 from application.response_formatter import formatter, json_value_validator
 from application.logging_handler import logger
 from application.regressor import get_regressor
+from application.health_check import run_health_check
 
-
-@ai_capacity_planner.route('/health')
-def check():
+@ai_capacity_planner.route('/liveness', methods=['GET'])
+def liveness():
     """
     Check availability of service.
+    :return HTTP 200 Response:
+    """
+    return run_health_check()
+
+@ai_capacity_planner.route('/readiness', methods=['GET'])
+def readiness():
+    """
+    Check readiness of service.
+    :return HTTP 200 Response:
+    """
+    return run_health_check()
+
+@ai_capacity_planner.route('/ping', methods=['GET'])
+def ping_check():
+    """
+    Check reachability of service.
     :return HTTP 200 Response:
     """
     return Response(status=const.HTTP_200_OK)
