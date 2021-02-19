@@ -1,0 +1,13 @@
+[run]
+source = application
+omit =
+    */site-packages/*
+    */distutils/*
+    */.theano/*
+    */dist-packages/*
+
+[html]
+directory = test_results/html
+
+[xml]
+output = test_results/capacity_planner_coverage.xml
